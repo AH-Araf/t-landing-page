@@ -66,8 +66,8 @@ export const faqItems = [
 ];
 
 function getSiteUrl() {
-
-  return "https://www.turffin.com/";
+  // Return site origin without trailing slash to avoid double-slash canonical URLs
+  return "https://www.turffin.com";
 }
 
 export function absoluteUrl(path = "/") {
