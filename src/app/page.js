@@ -11,8 +11,7 @@ const WAITLIST_HREF =
 
 const CONTACT_MAIL_HREF = "mailto:turffin.official@gmail.com";
 
-const HERO_IMAGE_SRC =
-  "https://lh3.googleusercontent.com/aida/ADBb0ujfBZZXbA2r6lIuOtpufDa7KGMoD-_c-D03_DHVlAEQz4Klr1QORob9ldhTqTSxp-lf8PJRVY9H0MYcQ55mscTIvTq2FfcklSZnxn1feqkEfcPv5WwP8mKv7zZ21tRLic6f4vILywv2VWhPyVp4SyKke5vei91Z50glUYUwRpbSDHeHYS0zm7oVLfIywDHf0Qlbn51uJecgWEBR7rCh5I4h5fptXQ-i0mcmf60d5U1T9r7SxLBc8-P2jPO6";
+const HERO_IMAGE_SRC = "/images/hero.jpg";
 
 function FaqItem({ question, answer }) {
   const [open, setOpen] = useState(false);
@@ -60,7 +59,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-xl">
         <nav className="relative mx-auto grid max-w-[1440px] grid-cols-[auto_1fr_auto] items-center gap-md px-margin py-md">
           <div className="flex items-center">
-            <img alt="Turffin Logo" className="h-8 md:h-10 w-auto brightness-0 invert" src="/images/logo.png" />
+            <img alt="Turffin — sports turf and field booking in Bangladesh" className="h-8 md:h-10 w-auto brightness-0 invert" src="/images/logo.png" width={160} height={40} />
           </div>
           <div className="hidden items-center justify-center gap-lg lg:flex">
             <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#mission">Mission</a>
@@ -81,7 +80,7 @@ export default function Home() {
               onClick={() => setMobileNavOpen((o) => !o)}
             >
               <span
-                className={`material-symbols-outlined text-[28px] transition-transform duration-500 ease-in-out ${mobileNavOpen ? "rotate-90" : ""}`}
+                className={`mr-[-25px] material-symbols-outlined text-[28px] transition-transform duration-500 ease-in-out ${mobileNavOpen ? "rotate-90" : ""}`}
               >
                 {mobileNavOpen ? "close" : "menu"}
               </span>
@@ -122,8 +121,12 @@ export default function Home() {
           <section className="relative isolate flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-margin pb-xl text-center md:pb-xxl">
             <div className="pointer-events-none absolute inset-0 z-0 min-h-full">
               <img
-                alt="Turffin Hero Image"
+                alt="Book football and cricket turfs across Bangladesh — sports field booking"
                 src={HERO_IMAGE_SRC}
+                width={1920}
+                height={1080}
+                decoding="async"
+                fetchPriority="high"
                 className="absolute inset-0 h-full w-full object-cover brightness-[0.5]"
               />
               <div className="absolute inset-0 hero-gradient" />
@@ -416,7 +419,7 @@ export default function Home() {
           <div className="max-w-[1440px] mx-auto px-margin">
             <div className="mb-xxl grid grid-cols-1 items-start gap-xxl lg:grid-cols-12">
               <div className="min-w-0 space-y-md lg:col-span-6">
-                <img alt="Turffin Logo" className="mb-lg h-8 w-auto brightness-0 invert md:h-10" src="https://lh3.googleusercontent.com/aida/ADBb0ugn0C-VcWQjeUcCKPU-tqVqUMqkeguUCHrZqeSY9tFizstqs_NlqrorePxYWdodDFBxfRlzbVbvmT_UC0kBox5Q_OBQGSYXJybH1udbgv5IlVv0BJWdlsiIeLYElzatFbWG-f2MfYr4uftWfRmRNp7SJiImnS2QSSapUID02xlivtBFoWt7k-Bb3-TEUc-7_X2CktDVxsPAF98W1mHHw-C2OF-wwQLQ0iHZKx1axvq7GscjGAef_9tpAGaM" />
+                <img alt="Turffin — sports turf and field booking in Bangladesh" className="mb-lg h-8 w-auto brightness-0 invert md:h-10" src="/images/logo.png" width={160} height={40} />
                 <p className="w-full text-pretty text-lg leading-relaxed text-on-surface-variant opacity-70">Find and book premium sports turfs across Bangladesh. The same promise as the live product. Full browse, memberships, and dashboards arrive at launch.</p>
                 <div className="flex gap-md pt-md">
                   <a className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors" href="https://turffin.vercel.app/" target="_blank">
