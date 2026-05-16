@@ -1,781 +1,475 @@
-"use client";
+﻿"use client";
 
+import Link from "next/link";
+import { useId, useState } from "react";
 
-/**
- * Turffin coming-soon — single self-contained file (no @/ imports, no site CSS variables).
- * Copy with: react, lucide-react, Tailwind scanning this file. Route: /coming-soon
- *
- * Content aligned with this repo: home hero/stats, homeSteps, about mission, browse-turf,
- * layout metadata ("premium sports turfs across Bangladesh"), player vs venue partner plans.
- */
+const WAITLIST_HREF =
+  "mailto:turffin.official@gmail.com?subject=" +
+  encodeURIComponent("Turffin waitlist") +
+  "&body=" +
+  encodeURIComponent("Please add me to the Turffin waitlist.\n\n");
 
+const CONTACT_MAIL_HREF = "mailto:turffin.official@gmail.com";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import {
-  ArrowRight,
-  Calendar,
-  CalendarClock,
-  Clock3,
-  Globe2,
-  LocateFixed,
-  MapPin,
-  Search,
-  Share2,
-  ShieldCheck,
-  Sparkles,
-  Trophy,
-  Zap,
-} from "lucide-react";
+const HERO_IMAGE_SRC = "/images/hero.jpg";
 
-
-const NAV_LINKS = [
-  { id: "hero", label: "Home" },
-  { id: "mission", label: "Mission" },
-  { id: "steps", label: "How it works" },
-  { id: "players", label: "For players" },
-  { id: "features", label: "Why Turffin" },
-  { id: "venues", label: "For venues" },
-  { id: "faq", label: "FAQ" },
-  { id: "footer", label: "Contact" },
-];
-
-
-const sectionScroll = "scroll-mt-24";
-
-
-/** Administrative divisions of Bangladesh (8) */
-const BANGLADESH_DIVISIONS = ["Barishal", "Chattogram", "Dhaka", "Khulna", "Mymensingh", "Rajshahi", "Rangpur", "Sylhet"];
-
-
-const CONTACT_EMAIL = "turffin.official@gmail.com";
-const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
-const WAITLIST_MAILTO = `${CONTACT_MAILTO}?subject=${encodeURIComponent("Turffin waitlist")}&body=${encodeURIComponent("Please add me to the Turffin waitlist.\n\n")}`;
-const SHARE_MAILTO = `${CONTACT_MAILTO}?subject=${encodeURIComponent("Turffin")}&body=${encodeURIComponent("Check out Turffin — turf booking for players and venues.\n\n")}`;
-const REGION_MAILTO = `${CONTACT_MAILTO}?subject=${encodeURIComponent("Turffin — question")}&body=${encodeURIComponent("Hi Turffin team,\n\n")}`;
-
-
-const C = {
-  surface: "#f7f9fb",
-  onSurface: "#191c1e",
-  onSurfaceVariant: "#3d4a3e",
-  primary: "#006d36",
-  primaryContainer: "#4ade80",
-  onPrimaryContainer: "#005e2d",
-  surfaceLow: "#f2f4f6",
-  secondary: "#545f73",
-  glow: "0 20px 20px rgba(74, 222, 128, 0.1)",
-  search: "0 20px 50px rgba(0, 0, 0, 0.08)",
-  cardLift: "0 20px 25px -5px rgba(74, 222, 128, 0.15), 0 10px 10px -5px rgba(74, 222, 128, 0.04)",
-  cta: "0 40px 80px rgba(0, 109, 54, 0.3)",
-};
-
-
-/** Same narrative as src/features/home/data.js */
-const HOW_IT_WORKS = [
-  {
-    icon: LocateFixed,
-    title: "1. Search",
-    text: "Filter by area, sport, and preferred time slot to find available turfs anywhere in Bangladesh as venues come online.",
-  },
-  {
-    icon: Calendar,
-    title: "2. Book",
-    text: "Select your slot, choose add-ons like equipment rental, and pay securely in seconds.",
-  },
-  {
-    icon: Clock3,
-    title: "3. Play",
-    text: "Receive your digital pass, head to the field, and start your session without any hassle.",
-  },
-];
-
-
-/** Venue software / listing tiers — partner pricing for this section is coming soon on the live site. */
-const venuePartnerTiers = [
-  {
-    name: "Starter",
-    blurb: "Single pitch or small venue",
-    features: ["One turf listing & profile", "Standard booking calendar", "Email alerts for new requests", "Help center access"],
-    highlighted: false,
-  },
-  {
-    name: "Team",
-    blurb: "Busy venue with multiple slots",
-    features: ["Up to 3 pitches under one account", "Priority placement in search", "In-app chat for player questions", "Monthly performance snapshot"],
-    highlighted: true,
-  },
-  {
-    name: "Club",
-    blurb: "Multi-site operators & brands",
-    features: ["Unlimited pitch slots", "Partner success line", "Advanced analytics export", "Co-marketing on launches"],
-    highlighted: false,
-  },
-];
-
-
-const faqItems = [
-  {
-    q: "What is Turffin?",
-    a: "Turffin connects athletes, schools, and clubs with premium sports turfs across Bangladesh. You search by area and sport, book a slot with transparent venue pricing, and show up with a digital pass.",
-  },
-  {
-    q: "Which sports and parts of Bangladesh?",
-    a: "The product is built around football, cricket, basketball, tennis, and more — with filters on browse. We are planning coverage across every administrative division — Barishal, Chattogram, Dhaka, Khulna, Mymensingh, Rajshahi, Rangpur, and Sylhet — with earlier pilots where venue density and demand line up best.",
-  },
-  {
-    q: "Do I pay a Turffin venue subscription just to play?",
-    a: "No. Any monthly partner plans you see us talk about are for turf owners who list on Turffin — not a fee to step on the pitch. As a player you pay the venue’s hourly slot rate when you book. The app also has optional player memberships for discounts — see Memberships when the full site is live.",
-  },
-  {
-    q: "I run a turf. What do I get?",
-    a: "A listing players can find in browse, calendars and booking requests in your turf admin dashboard, and tools to reduce no-shows. Partner plans cover that software; you still set your own hourly prices.",
-  },
-];
-
-
-function MenuIcon({ open }) {
-  return open ? (
-    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
-  ) : (
-    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  );
-}
-
-
-function fontClass() {
-  return "font-['Lexend',ui-sans-serif,system-ui,sans-serif]";
-}
-
-
-function desktopNavLinkClass(id, activeId) {
-  const isActive = activeId === id;
-  return [
-    "relative rounded-lg px-2 py-1.5 text-xs font-medium xl:px-2.5 xl:text-sm",
-    "underline decoration-2 underline-offset-[10px] transition-[color,text-decoration-color] duration-200 ease-out",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006d36]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f9fb]",
-    isActive
-      ? "font-semibold text-[#006d36] decoration-[#006d36]"
-      : "text-[#3d4a3e] decoration-transparent hover:text-[#006d36] hover:decoration-[#006d36]/80",
-  ].join(" ");
-}
-
-
-function mobileNavLinkClass(id, activeId) {
-  const isActive = activeId === id;
-  return [
-    "flex rounded-lg border-l-[3px] px-3 py-2.5 text-sm font-medium transition-[color,background-color,border-color] duration-200",
-    isActive
-      ? "border-[#006d36] bg-[#4ade80]/12 font-semibold text-[#006d36]"
-      : "border-transparent text-[#191c1e] hover:border-[#006d36]/40 hover:bg-[#4ade80]/8 hover:text-[#006d36]",
-  ].join(" ");
-}
-
-
-export default function ComingSoonStandalonePage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeNavId, setActiveNavId] = useState("hero");
-  const menuRef = useRef(null);
-
-
-  useEffect(() => {
-    document.title = "Turffin — Coming soon";
-    const id = "cs-lexend-font";
-    if (!document.getElementById(id)) {
-      const link = document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href =
-        "https://fonts.googleapis.com/css2?family=Lexend:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&display=swap";
-      document.head.appendChild(link);
-    }
-  }, []);
-
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    document.body.style.overflow = "hidden";
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-    };
-  }, [menuOpen]);
-
-
-  useEffect(() => {
-    if (!menuOpen || !menuRef.current) return;
-    const menuNode = menuRef.current;
-    const focusable = menuNode.querySelectorAll('a, button, [tabindex]:not([tabindex="-1"])');
-    if (focusable.length) focusable[0].focus();
-    const handleTab = (e) => {
-      if (e.key !== "Tab") return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    menuNode.addEventListener("keydown", handleTab);
-    return () => menuNode.removeEventListener("keydown", handleTab);
-  }, [menuOpen]);
-
-
-  useEffect(() => {
-    const syncFromHash = () => {
-      const raw = window.location.hash.replace(/^#/, "");
-      if (raw && NAV_LINKS.some((l) => l.id === raw)) setActiveNavId(raw);
-    };
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
-  }, []);
-
-
-  useEffect(() => {
-    const header = document.querySelector("header");
-    const line = () => (header?.getBoundingClientRect().bottom ?? 72) + 8;
-
-    const updateActive = () => {
-      const y = line();
-      let current = NAV_LINKS[0].id;
-      for (const { id } of NAV_LINKS) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const top = el.getBoundingClientRect().top;
-        if (top <= y) current = id;
-      }
-      setActiveNavId((prev) => (prev === current ? prev : current));
-    };
-
-    updateActive();
-    window.addEventListener("scroll", updateActive, { passive: true });
-    window.addEventListener("resize", updateActive);
-    return () => {
-      window.removeEventListener("scroll", updateActive);
-      window.removeEventListener("resize", updateActive);
-    };
-  }, []);
-
-
-  const overlayClass =
-    `fixed inset-0 top-[4.25rem] z-40 bg-[#191c1e]/35 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden ` +
-    (menuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0");
-
-
-  const mobileNavClass =
-    `fixed inset-x-0 top-[4.25rem] z-50 max-h-[calc(100vh-4.25rem)] overflow-y-auto border-b border-[#006d36]/10 bg-[#f7f9fb] px-4 py-4 transition-transform duration-300 ease-out lg:hidden ` +
-    (menuOpen ? "translate-y-0" : "pointer-events-none -translate-y-full");
-
+function FaqItem({ question, answer }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
 
   return (
-    <div className={`landing-page min-h-screen antialiased ${fontClass()}`} style={{ backgroundColor: C.surface, color: C.onSurface }}>
-      <header
-        className="sticky top-0 z-50 w-full border-b border-slate-200/70 bg-[#f7f9fb]/92 shadow-sm shadow-slate-900/[0.04] backdrop-blur-md"
-        style={{ boxShadow: `${C.glow}, 0 1px 0 rgba(255,255,255,0.6) inset` }}
+    <div className="border-b border-white/10">
+      <button
+        type="button"
+        className="flex w-full justify-between items-center gap-4 py-lg cursor-pointer text-left"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        aria-controls={panelId}
       >
-        <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <a
-            href="#hero"
-            className="group shrink-0 rounded-xl outline-none ring-offset-2 transition duration-300 hover:opacity-95 hover:ring-2 hover:ring-[#006d36]/15 focus-visible:ring-2 focus-visible:ring-[#006d36]"
-            aria-label="Turffin — home"
+        <h3 className="font-headline-md text-[20px] text-white uppercase">{question}</h3>
+        <span
+          className={`material-symbols-outlined shrink-0 text-primary transition-transform duration-500 ease-in-out ${open ? "rotate-45" : ""}`}
+        >
+          add
+        </span>
+      </button>
+      <div
+        id={panelId}
+        role="region"
+        aria-hidden={!open}
+        className={`grid transition-[grid-template-rows] duration-500 ease-in-out motion-reduce:transition-none ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <p
+            className={`pb-lg text-on-surface-variant transition-opacity duration-500 ease-in-out motion-reduce:transition-none ${open ? "opacity-70" : "opacity-0"}`}
           >
-            <Image
-              src="/images/logo.png"
-              alt="Turffin — Book, Play, Connect"
-              width={200}
-              height={56}
-              className="h-8 w-auto transition duration-300 group-hover:scale-[1.02] sm:h-9"
-              priority
-            />
-          </a>
-
-
-          <nav className="ms-1 hidden flex-1 flex-wrap items-center justify-end gap-0.5 lg:flex lg:gap-0.5" aria-label="On this page">
-            {NAV_LINKS.map(({ id, label }) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                className={desktopNavLinkClass(id, activeNavId)}
-                aria-current={activeNavId === id ? "true" : undefined}
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-
-
-          <div className="ml-auto flex items-center gap-2 lg:ml-0">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-[#191c1e] shadow-sm transition duration-200 hover:border-[#006d36]/25 hover:bg-slate-50 lg:hidden"
-              aria-label="Toggle menu"
-              aria-expanded={menuOpen}
-            >
-              <MenuIcon open={menuOpen} />
-            </button>
-            <a
-              href={WAITLIST_MAILTO}
-              className="hidden h-9 items-center justify-center rounded-full bg-[#4ade80] px-4 text-xs font-bold text-[#005e2d] shadow-md shadow-[#006d36]/15 transition duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-[#006d36]/20 active:scale-[0.98] sm:inline-flex lg:text-sm"
-            >
-              Join waitlist
-            </a>
-          </div>
+            {answer}
+          </p>
         </div>
-      </header>
-
-
-      <div onClick={() => setMenuOpen(false)} className={overlayClass} aria-hidden />
-
-
-      <nav ref={menuRef} className={mobileNavClass} style={{ boxShadow: C.search }} aria-label="On this page">
-        <div className="flex flex-col gap-0.5">
-          {NAV_LINKS.map(({ id, label }) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              onClick={() => setMenuOpen(false)}
-              className={mobileNavLinkClass(id, activeNavId)}
-              aria-current={activeNavId === id ? "true" : undefined}
-            >
-              {label}
-            </a>
-          ))}
-          <a
-            href={WAITLIST_MAILTO}
-            onClick={() => setMenuOpen(false)}
-            className="mt-2 flex h-10 w-full items-center justify-center rounded-full bg-[#4ade80] text-sm font-bold text-[#005e2d] shadow-md transition duration-200 hover:opacity-95 active:scale-[0.99]"
-          >
-            Join waitlist
-          </a>
-        </div>
-      </nav>
-
-
-      <main>
-        <section
-          id="hero"
-          className={`relative overflow-hidden ${sectionScroll} border-b border-white/10 bg-gradient-to-br from-[#021910] via-[#006d36] to-[#044027] px-4 pb-14 pt-9 text-white sm:px-6 sm:pb-16 sm:pt-10`}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-20%,rgba(74,222,128,0.22),transparent_55%)]"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.1]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-            aria-hidden
-          />
-          <div className="landing-hero-blob pointer-events-none absolute -right-24 top-1/4 h-64 w-64 rounded-full bg-[#4ade80]/20 blur-3xl sm:h-72 sm:w-72" aria-hidden />
-          <div
-            className="landing-hero-blob landing-hero-blob--delayed pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl sm:h-64 sm:w-64"
-            aria-hidden
-          />
-
-
-          <div className="relative mx-auto max-w-6xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#bbf7d0] shadow-sm backdrop-blur-sm transition duration-300 hover:border-white/35 hover:bg-white/15">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Coming soon
-            </p>
-            <h1 className="mt-5 max-w-4xl text-[2rem] font-black leading-[1.1] tracking-tight sm:text-5xl md:text-[3.25rem]">
-              Find and book <span className="gradient-text italic">premium sports turfs</span> across Bangladesh.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-emerald-100/95 sm:text-base">
-              Search by area, sport, and time. Pick a slot, pay securely, and take a digital pass to the pitch — the same
-              flow the Turffin app is built around. Venues get dashboards to manage requests and calendars.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-2.5">
-              <a
-                href={WAITLIST_MAILTO}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#4ade80] px-6 text-sm font-bold text-[#005e2d] shadow-lg shadow-black/20 transition duration-200 hover:scale-[1.02] hover:brightness-105 active:scale-[0.98]"
-                style={{ boxShadow: C.cta }}
-              >
-                Get launch updates
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </a>
-              <a
-                href="#steps"
-                className="inline-flex h-11 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition duration-200 hover:border-white/45 hover:bg-white/18"
-              >
-                See how it works
-              </a>
-            </div>
-            <dl className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-5">
-              {[
-                { k: "Turf venues", v: "150+" },
-                { k: "Nationwide", v: "Bangladesh" },
-                { k: "Launch window", v: "July 2026" },
-              ].map(({ k, v }) => (
-                <div
-                  key={k}
-                  className="rounded-2xl border border-white/15 bg-white/[0.07] p-4 shadow-inner shadow-black/10 backdrop-blur-sm transition duration-300 hover:border-white/25 hover:bg-white/[0.1]"
-                >
-                  <dt className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/85">{k}</dt>
-                  <dd className="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
-
-        <section id="mission" className={`${sectionScroll} px-4 py-10 sm:px-6 sm:py-14`}>
-          <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#006d36]">Mission</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-[2rem]">
-                  Democratizing access to professional-grade surfaces.
-                </h2>
-                <p className="mt-3 text-sm leading-relaxed text-[#3d4a3e] sm:text-base">
-                  The hardest part of organized sports should not be finding a place to play. Turffin is the link between
-                  great facilities and the athletes, schools, and clubs that use them — starting in Bangladesh and
-                  growing with every booking.
-                </p>
-                <div className="mt-6">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#006d36]">Across Bangladesh</p>
-                  <p className="mt-2 text-sm leading-relaxed text-[#3d4a3e] sm:text-base">
-                    Roadmaps and venue onboarding are framed around all eight administrative divisions — so Turffin can
-                    grow with the country, not just a single corridor.
-                  </p>
-                  <ul
-                    className="mt-3 flex flex-wrap gap-1.5"
-                    aria-label="Administrative divisions of Bangladesh covered in our roadmap"
-                  >
-                    {BANGLADESH_DIVISIONS.map((name) => (
-                      <li
-                        key={name}
-                        className="rounded-full border border-[#006d36]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#191c1e] shadow-sm transition duration-200 hover:border-[#006d36]/35 hover:shadow-md"
-                      >
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <ul className="mt-6 space-y-3">
-                  {[
-                    { icon: MapPin, text: "Bangladesh-wide, map-first discovery as we add venues division by division." },
-                    { icon: ShieldCheck, text: "Filters for sport, hourly budget, and amenities so listings stay relevant." },
-                    { icon: Trophy, text: "Elite sporting grounds: the browse experience matches how the live app is designed." },
-                  ].map(({ icon: Icon, text }) => (
-                    <li key={text} className="flex gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#4ade80]/20 text-[#006d36] ring-1 ring-[#006d36]/10">
-                        <Icon className="h-5 w-5" aria-hidden />
-                      </span>
-                      <span className="pt-1 text-sm font-medium leading-snug text-[#191c1e] sm:text-[15px]">{text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div
-                className="relative overflow-hidden rounded-2xl border border-[#006d36]/12 bg-gradient-to-br from-white via-white to-[#eef6f0] p-6 shadow-lg shadow-slate-900/5 ring-1 ring-slate-200/60 sm:p-7"
-                style={{ boxShadow: C.search }}
-              >
-                <div className="pointer-events-none absolute -right-3 -top-3 h-20 w-20 rounded-full bg-[#4ade80]/30 blur-2xl" aria-hidden />
-                <CalendarClock className="h-9 w-9 text-[#006d36]" aria-hidden />
-                <p className="mt-3 text-base font-bold text-slate-900">Before launch</p>
-                <ol className="mt-4 space-y-3 text-sm leading-relaxed text-[#3d4a3e]">
-                  <li className="flex gap-3">
-                    <span className="font-mono text-xs font-bold text-[#006d36]">01</span>
-                    <span>Payments, receipts, and slot picker wired end-to-end.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-mono text-xs font-bold text-[#006d36]">02</span>
-                    <span>Turf admin + player dashboards tested with real booking paths.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="font-mono text-xs font-bold text-[#006d36]">03</span>
-                    <span>Waitlist rollout by city so demand matches venue onboarding.</span>
-                  </li>
-                </ol>
-                <p className="mt-6 rounded-xl border border-slate-200/90 bg-white/80 px-3.5 py-2.5 text-sm leading-relaxed text-[#3d4a3e] shadow-sm">
-                  Early invites roll out by city. This preview has no sign-up or reservation backend — when you are ready,
-                  email{" "}
-                  <a
-                    className="font-semibold text-[#006d36] underline decoration-[#006d36]/40 underline-offset-2 transition hover:decoration-[#006d36]"
-                    href={CONTACT_MAILTO}
-                  >
-                    {CONTACT_EMAIL}
-                  </a>{" "}
-                  or use any <span className="font-semibold text-[#191c1e]">Join waitlist</span> link to open a pre-filled message in your mail app.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-        <section
-          id="steps"
-          className={`${sectionScroll} border-y border-slate-200/80 bg-gradient-to-b from-[#eef1f4] to-[#f7f9fb] px-4 py-10 sm:px-6 sm:py-14`}
-        >
-          <div className="mx-auto max-w-6xl">
-            <p className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#006d36]">How it works</p>
-            <h2 className="mt-2 text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-[2rem]">
-              Search, book, play — same three beats as the product
-            </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#3d4a3e] sm:text-base">
-              This mirrors the home page journey in Turffin: filters and map-style browse, slot selection and secure
-              checkout, then a digital pass for game day.
-            </p>
-            <div className="mt-8 grid gap-4 md:grid-cols-3 md:gap-5">
-              {HOW_IT_WORKS.map(({ icon: Icon, title, text }) => (
-                <div
-                  key={title}
-                  className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-md shadow-slate-900/[0.04] ring-1 ring-white/80 transition duration-300 hover:-translate-y-0.5 hover:border-[#006d36]/20 hover:shadow-lg hover:shadow-[#006d36]/10"
-                  style={{ boxShadow: C.cardLift }}
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#4ade80]/18 text-[#006d36] transition duration-300 group-hover:scale-105 group-hover:bg-[#4ade80]/28">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </div>
-                  <h3 className="mt-3 text-base font-bold text-slate-900">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#3d4a3e]">{text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-
-        <section id="players" className={`${sectionScroll} px-4 py-10 sm:px-6 sm:py-14`}>
-          <div className="mx-auto max-w-6xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#006d36]">For players</p>
-            <h2 className="mt-2 max-w-3xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-[2rem]">
-              Browse like the live app: filters, cards, then slot availability
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm text-[#3d4a3e] sm:text-base">
-              The browse experience is built around sport type, hourly price range, amenities (changing rooms, lights,
-              parking, cafe), and distance to the venues you care about. Open a turf, review photos and rules, then open
-              the slot grid to see what is actually free.
-            </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-              {[
-                { icon: Search, title: "Elite sporting grounds", body: "Curated listings — the same positioning as Browse Turfs in the app." },
-                { icon: MapPin, title: "Area-first", body: "Find pitches in your part of town instead of chasing rumors in chat." },
-                { icon: CalendarClock, title: "Slot availability", body: "Time blocks and pricing before you commit — no surprises at the gate." },
-                { icon: Zap, title: "Secure checkout", body: "Pick add-ons where venues offer them, pay, and get confirmation you can share." },
-              ].map(({ icon: Icon, title, body }) => (
-                <div
-                  key={title}
-                  className="group rounded-2xl border border-slate-200/85 bg-white p-5 shadow-sm shadow-slate-900/[0.03] ring-1 ring-slate-100 transition duration-300 hover:-translate-y-0.5 hover:border-[#006d36]/18 hover:shadow-md"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4ade80]/18 text-[#006d36] transition duration-300 group-hover:bg-[#4ade80]/28">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </div>
-                  <h3 className="mt-3 text-base font-bold text-slate-900">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#3d4a3e]">{body}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-6 max-w-3xl rounded-xl border border-slate-200/80 bg-[#f7f9fb] px-4 py-3 text-sm leading-relaxed text-[#3d4a3e] sm:text-[15px]">
-              <strong className="text-[#191c1e]">Note:</strong> the partner plans below are{" "}
-              <strong className="text-[#191c1e]">for turf owners</strong>, not a subscription to kick a ball. That whole
-              block is <strong className="text-[#191c1e]">coming soon</strong> — pricing and signup will ship with venue
-              onboarding. Players pay venue hourly rates when they book. Optional player memberships (discounts, longer
-              booking windows) appear on the main site Memberships page when we open fully.
-            </p>
-          </div>
-        </section>
-
-
-        <section
-          id="features"
-          className={`${sectionScroll} border-t border-slate-200/80 bg-gradient-to-b from-white to-[#f4f8f6] px-4 py-10 sm:px-6 sm:py-14`}
-        >
-          <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#006d36]">Why Turffin</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-[2rem]">
-                Premium turfs, effortless booking, elite management
-              </h2>
-              <p className="mt-2 text-sm text-[#3d4a3e] sm:text-base">
-                Echoing the home experience: one place for teams who play to win, and for venues that want professional
-                operations without losing their brand.
-              </p>
-            </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-              {[
-                { title: "Multi-sport", body: "Football, cricket, basketball, tennis, and more — aligned with browse filters.", icon: Sparkles },
-                { title: "Trusted listings", body: "Rich turf pages with galleries, amenities, and getting-there context.", icon: ShieldCheck },
-                { title: "Team-ready", body: "Share confirmations and keep squads aligned on time and location.", icon: Trophy },
-                { title: "Venue operations", body: "Turf admin tools for requests, calendar, and analytics in the dashboard.", icon: Zap },
-              ].map(({ title, body, icon: Icon }) => (
-                <div
-                  key={title}
-                  className="group rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-0.5 hover:border-[#006d36]/22 hover:bg-white hover:shadow-md"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4ade80]/18 text-[#006d36] transition duration-300 group-hover:scale-105 group-hover:bg-[#4ade80]/30">
-                    <Icon className="h-5 w-5" aria-hidden />
-                  </div>
-                  <h3 className="mt-3 text-base font-bold text-slate-900">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#3d4a3e]">{body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-
-        <section
-          id="venues"
-          className={`${sectionScroll} relative overflow-hidden bg-gradient-to-b from-slate-800 via-slate-900 to-[#0a1628] px-4 py-10 text-white sm:px-6 sm:py-14`}
-        >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#4ade80]/40 to-transparent" aria-hidden />
-          <div className="pointer-events-none absolute -right-32 top-1/3 h-64 w-64 rounded-full bg-[#006d36]/25 blur-3xl" aria-hidden />
-          <div className="relative mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#4ade80]">For turf owners</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl md:text-[2rem]">Venue partner plans on Turffin</h2>
-              <p className="mt-2 text-sm text-slate-400 sm:text-base">
-                Monthly partner plans for listing, visibility, calendars, and operations are{" "}
-                <strong className="font-semibold text-slate-200">coming soon</strong>. Your players still pay your hourly
-                slot rates when players book through Turffin; these tiers will power your presence on the platform when venue
-                onboarding opens.
-              </p>
-            </div>
-            <div className="mt-8 grid gap-4 lg:grid-cols-3 lg:gap-5">
-              {venuePartnerTiers.map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`relative flex flex-col rounded-2xl border p-6 transition duration-300 sm:p-7 ${
-                    tier.highlighted
-                      ? "border-[#4ade80]/45 bg-gradient-to-b from-[#0d3d24]/90 to-slate-900/90 shadow-xl shadow-black/30 ring-2 ring-[#4ade80]/35"
-                      : "border-slate-600/50 bg-slate-900/40 hover:border-slate-500/70 hover:bg-slate-900/55"
-                  }`}
-                  style={tier.highlighted ? { boxShadow: C.cta } : undefined}
-                >
-                  {tier.highlighted ? (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#4ade80] px-3 py-0.5 text-[10px] font-bold tracking-wide text-[#005e2d] shadow-md">
-                      Popular
-                    </span>
-                  ) : null}
-                  <h3 className="text-base font-bold">{tier.name}</h3>
-                  <p className="mt-1 text-xs text-slate-400 sm:text-sm">{tier.blurb}</p>
-                  <div className="mt-5 min-h-[4.25rem]">
-                    <p className="text-xl font-black tracking-tight text-[#4ade80] sm:text-2xl">Coming soon</p>
-                    <p className="mt-1 text-xs leading-snug text-slate-400 sm:text-sm">
-                      Partner tier details and pricing go live with the full venue dashboard — join the waitlist to get
-                      word first.
-                    </p>
-                  </div>
-                  <ul className="mt-6 flex-1 space-y-2.5 text-sm text-slate-300">
-                    {tier.features.map((f) => (
-                      <li key={f} className="flex gap-2">
-                        <span className="mt-0.5 shrink-0 text-[#4ade80]">✓</span>
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={WAITLIST_MAILTO}
-                    className={`mt-6 flex w-full items-center justify-center rounded-full py-2.5 text-sm font-bold transition duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                      tier.highlighted
-                        ? "bg-[#4ade80] text-[#005e2d] shadow-lg shadow-black/25"
-                        : "border border-slate-600 bg-slate-800/80 text-white hover:border-[#4ade80]/40 hover:bg-slate-800"
-                    }`}
-                  >
-                    Join waitlist
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-
-        <section id="faq" className={`${sectionScroll} px-4 py-10 sm:px-6 sm:py-14`}>
-          <div className="mx-auto max-w-3xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-[2rem]">
-              FAQs
-            </h2>
-            <div className="mt-6 space-y-2">
-              {faqItems.map((item) => (
-                <details
-                  key={item.q}
-                  className="landing-faq-details group rounded-xl border border-slate-200/90 bg-white px-4 py-0.5 shadow-sm transition-[border-color,box-shadow,background-color] delay-1000 duration-[650ms] ease-out open:border-[#006d36]/25 open:bg-[#fbfffc] open:shadow-md"
-                >
-                  <summary className="cursor-pointer list-none py-3.5 text-sm font-semibold text-slate-900 marker:content-none sm:text-[15px] [&::-webkit-details-marker]:hidden">
-                    <span className="flex w-full items-center justify-between gap-3">
-                      {item.q}
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-sm text-[#006d36] transition-[transform,background-color,border-color] delay-1000 duration-[650ms] ease-out group-open:rotate-45 group-open:border-[#006d36]/25 group-open:bg-[#4ade80]/15">
-                        +
-                      </span>
-                    </span>
-                  </summary>
-                  <div className="landing-faq-panel">
-                    <div className="landing-faq-inner">
-                      <p className="border-t border-slate-100 pb-3.5 pt-2 text-sm leading-relaxed text-[#3d4a3e]">{item.a}</p>
-                    </div>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
-
-
-      <footer id="footer" className="scroll-mt-24 border-t border-slate-800/90 bg-gradient-to-b from-slate-900 to-[#060d16] text-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-9 sm:px-6 md:flex-row md:items-start md:gap-8">
-          <div className="text-center md:text-left">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#4ade80]">Turffin</p>
-            <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
-              Find and book premium sports turfs across Bangladesh — the same promise as the live product. Full browse,
-              memberships, and dashboards arrive at launch.
-            </p>
-            <p className="mt-3 text-xs text-slate-500">© {new Date().getFullYear()} Turffin. All rights reserved.</p>
-          </div>
-          <div className="flex flex-col items-center gap-2 text-sm text-slate-400 md:items-end">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Contact</p>
-            <a
-              href={CONTACT_MAILTO}
-              className="text-[#4ade80] underline decoration-[#4ade80]/50 underline-offset-4 transition hover:text-white"
-            >
-              {CONTACT_EMAIL}
-            </a>
-            <div className="mt-1 flex flex-wrap justify-center gap-5 text-xs md:justify-end">
-              <a className="text-[#4ade80] underline decoration-[#4ade80]/50 underline-offset-4 transition hover:text-white" href="#">
-                Privacy
-              </a>
-              <a className="text-[#4ade80] underline decoration-[#4ade80]/50 underline-offset-4 transition hover:text-white" href="#">
-                Terms
-              </a>
-            </div>
-          </div>
-          <div className="flex gap-2 text-slate-300">
-            <a
-              href={SHARE_MAILTO}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-600/80 bg-slate-800/50 text-slate-300 transition duration-200 hover:border-[#4ade80]/50 hover:bg-[#4ade80]/10 hover:text-white"
-              aria-label="Email us about Turffin"
-            >
-              <Share2 className="h-4 w-4" />
-            </a>
-            <a
-              href={REGION_MAILTO}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-600/80 bg-slate-800/50 text-slate-300 transition duration-200 hover:border-[#4ade80]/50 hover:bg-[#4ade80]/10 hover:text-white"
-              aria-label="Email Turffin with a question"
-            >
-              <Globe2 className="h-4 w-4" />
-            </a>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
 
+export default function Home() {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  return (
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-xl">
+        <nav className="relative mx-auto grid max-w-[1440px] grid-cols-[auto_1fr_auto] items-center gap-md px-margin py-md">
+          <div className="flex items-center">
+            <img alt="Turffin — sports turf and field booking in Bangladesh" className="h-8 md:h-10 w-auto brightness-0 invert" src="/images/logo.png" width={160} height={40} />
+          </div>
+          <div className="hidden items-center justify-center gap-lg lg:flex">
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#mission">Mission</a>
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#how-it-works">How it works</a>
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#for-players">For players</a>
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#why-turffin">Why Turffin</a>
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#for-venues">For venues</a>
+            <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#faq">FAQ</a>
+            {/* <a className="font-label-lg text-label-lg text-on-surface hover:text-primary transition-colors duration-200" href="#contact">Contact</a> */}
+          </div>
+          <div className="flex items-center justify-end">
+            <a className="hidden bg-primary text-on-primary px-lg py-sm rounded-full font-label-lg uppercase transition-all btn-primary-gradient btn-waitlist lg:inline-flex" href={WAITLIST_HREF}>Join waitlist</a>
+            <button
+              type="button"
+              className="p-sm text-on-surface lg:hidden"
+              aria-expanded={mobileNavOpen}
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileNavOpen((o) => !o)}
+            >
+              <span
+                className={`mr-[-25px] material-symbols-outlined text-[28px] transition-transform duration-500 ease-in-out ${mobileNavOpen ? "rotate-90" : ""}`}
+              >
+                {mobileNavOpen ? "close" : "menu"}
+              </span>
+            </button>
+          </div>
+          <div
+            className={`absolute top-full left-0 right-0 z-50 col-span-full grid transition-[grid-template-rows] duration-500 ease-in-out motion-reduce:transition-none lg:hidden ${mobileNavOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+            aria-hidden={!mobileNavOpen}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div
+                className={`border-b border-white/10 bg-background/95 shadow-lg backdrop-blur-xl transition-opacity duration-500 ease-in-out motion-reduce:transition-none ${mobileNavOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              >
+                <div className="flex flex-col gap-md p-margin font-label-lg text-on-surface">
+                  <a className="hover:text-primary transition-colors" href="#mission" onClick={() => setMobileNavOpen(false)}>Mission</a>
+                <a className="hover:text-primary transition-colors" href="#how-it-works" onClick={() => setMobileNavOpen(false)}>How it works</a>
+                <a className="hover:text-primary transition-colors" href="#for-players" onClick={() => setMobileNavOpen(false)}>For players</a>
+                <a className="hover:text-primary transition-colors" href="#why-turffin" onClick={() => setMobileNavOpen(false)}>Why Turffin</a>
+                <a className="hover:text-primary transition-colors" href="#for-venues" onClick={() => setMobileNavOpen(false)}>For venues</a>
+                <a className="hover:text-primary transition-colors" href="#faq" onClick={() => setMobileNavOpen(false)}>FAQ</a>
+                {/* <a className="hover:text-primary transition-colors" href="#contact" onClick={() => setMobileNavOpen(false)}>Contact</a> */}
+                <a
+                  className="btn-waitlist btn-primary-gradient mt-md block w-full rounded-md bg-primary py-md text-center font-label-lg uppercase text-on-primary transition-all"
+                  href={WAITLIST_HREF}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Join waitlist
+                </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
+      <div className="dark selection:bg-primary selection:text-on-primary min-h-screen overflow-x-hidden bg-background text-on-surface">
+        <main>
 
+          <section className="relative isolate flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-margin pb-xl text-center md:pb-xxl">
+            <div className="pointer-events-none absolute inset-0 z-0 min-h-full">
+              <img
+                alt="Book football and cricket turfs across Bangladesh — sports field booking"
+                src={HERO_IMAGE_SRC}
+                width={1920}
+                height={1080}
+                decoding="async"
+                fetchPriority="high"
+                className="absolute inset-0 h-full w-full object-cover brightness-[0.5]"
+              />
+              <div className="absolute inset-0 hero-gradient" />
+            </div>
+            <div className="relative z-10 flex w-full max-w-5xl flex-col items-center space-y-lg">
+              <span className="font-label-lg mt-2 text-label-lg text-primary uppercase tracking-[0.2em] bg-primary/10 border border-primary/30 px-md py-xs rounded-full inline-block mb-md">Coming soon</span>
+              <h1 className="font-display-lg text-display-lg-mobile md:text-[96px] uppercase text-white leading-[1.1] max-w-4xl mx-auto masking-container">Find and book <span className="masked-text">premium sports turfs</span> across Bangladesh.</h1>
+              <p className="font-body-lg text-body-lg text-white max-w-2xl mx-auto opacity-80 pt-md">Search by area, sport, and time. Pick a slot, pay securely, and take a digital pass to the pitch. The same flow the Turffin app is built around. Venues get dashboards to manage requests and calendars.</p>
+              <div className="flex flex-col md:flex-row gap-md justify-center pt-xl">
+                <button className="bg-primary text-on-primary font-label-lg uppercase px-xl py-sm rounded-full transition-all btn-primary-gradient">Get launch updates</button>
+                <Link  href="https://turffin.vercel.app/" target="_blank">
+                <button className="border-2 border-white/20 text-white font-label-lg uppercase px-xl py-sm rounded-full transition-all backdrop-blur-sm">
+                See how it works
+                </button>
+                </Link>
+              </div>
+            </div>
+            <div className="relative z-10 mt-xl grid w-full max-w-[1440px] grid-cols-1 gap-xxl border-t border-white/10 pt-lg md:grid-cols-3">
+              <div className="flex flex-col items-center">
+                <span className="font-headline-lg text-headline-md leading-none text-primary">150+</span>
+                <span className="font-label-lg text-white uppercase tracking-widest opacity-60">Turf venues</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="font-headline-lg text-headline-md leading-none text-primary">Bangladesh</span>
+                <span className="font-label-lg text-white uppercase tracking-widest opacity-60">Nationwide</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="font-headline-lg text-headline-md leading-none text-primary">July 2026</span>
+                <span className="font-label-lg text-white uppercase tracking-widest opacity-60">Launch window</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl max-w-[1440px] mx-auto px-margin" id="mission">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-xxl items-start">
+              <div className="space-y-lg">
+                <span className="font-label-lg text-label-lg text-primary uppercase">Mission</span>
+                <h2 className="font-headline-lg text-headline-lg text-white uppercase leading-tight">Democratizing access to professional grade surfaces.</h2>
+                <p className="font-body-lg text-body-lg text-on-surface-variant opacity-80">The hardest part of organized sports should not be finding a place to play. Turffin is the link between great facilities and the athletes, schools, and clubs that use them, starting in Bangladesh and growing with every booking.</p>
+                <div className="pt-xl space-y-md">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase">Across Bangladesh</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant opacity-70">Roadmaps and venue onboarding are framed around all eight administrative divisions, so Turffin can grow with the country, not just a single corridor.</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-sm pt-sm">
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Dhaka</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Barishal</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Chattogram</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Khulna</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Mymensingh</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Rajshahi</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Rangpur</span>
+                    <span className="rounded border border-white/5 bg-surface-container-high px-md py-md text-center font-label-sm text-on-surface transition-colors hover:border-white">Sylhet</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative group rounded-xl overflow-hidden border border-white/10">
+                <img alt="Turf Quality Mission" className="w-full aspect-square object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbV85rRIP_KTaOtsyCLNfMrfP_bWu39UWYCbuUYp_5zW5O9lVCcAith-rmvYwYtY4XJkTIEnfLISUPH66V6FYrq-vIRb06N73jh-LleDB-xC8Bl2MzEXjmHb533gjC0q-mv1RQhtGkogsy1sHmiUyc2Y-jjJRw8_ApnRflRjzM9UQjdf8_f2K1w8BzQ4k9yimrUHIN5MfLVHtniuGd3Q0Qi4a8ia6ozgHthDQVh78rOsvLHpZcIt3-8F9CSB0q4uzaRou_txo9X2PU" />
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl bg-surface-container-lowest" id="how-it-works">
+            <div className="max-w-[1440px] mx-auto px-margin">
+              <div className="text-center mb-xxl max-w-3xl mx-auto space-y-md">
+                <span className="font-label-lg text-label-lg text-primary uppercase">How it works</span>
+                <h2 className="font-headline-lg text-headline-lg text-white uppercase leading-tight">Search, book, play: same three beats as the product</h2>
+                <p className="font-body-md text-body-md text-on-surface-variant opacity-80">This mirrors the home page journey in Turffin: filters and map style browse, slot selection and secure checkout, then a digital pass for game day.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                <div className="card-orange-outline-hover bg-surface-container p-xl rounded space-y-md relative group">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
+                    <span className="material-symbols-outlined text-primary" data-icon="search">search</span>
+                  </div>
+                  <h3 className="font-headline-md text-[28px] text-white uppercase">1. Search</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant opacity-70">Filter by area, sport, and preferred time slot to find available turfs anywhere in Bangladesh as venues come online.</p>
+                </div>
+                <div className="card-orange-outline-hover bg-surface-container p-xl rounded space-y-md relative group">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
+                    <span className="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+                  </div>
+                  <h3 className="font-headline-md text-[28px] text-white uppercase">2. Book</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant opacity-70">Select your slot, choose add ons like equipment rental, and pay securely in seconds.</p>
+                </div>
+                <div className="card-orange-outline-hover bg-surface-container p-xl rounded space-y-md relative group">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-md">
+                    <span className="material-symbols-outlined text-primary" data-icon="sports_soccer">sports_soccer</span>
+                  </div>
+                  <h3 className="font-headline-md text-[28px] text-white uppercase">3. Play</h3>
+                  <p className="font-body-md text-body-md text-on-surface-variant opacity-70">Receive your digital pass, head to the field, and start your session without any hassle.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl max-w-[1440px] mx-auto px-margin" id="for-players">
+            <div className="mb-xxl flex flex-col md:flex-row justify-between items-end gap-lg">
+              <div className="max-w-2xl space-y-md">
+                <span className="font-label-lg text-label-lg text-primary uppercase">For players</span>
+                <h2 className="font-headline-lg text-headline-lg text-white uppercase leading-tight">Browse like the live app: filters, cards, then slot availability</h2>
+              </div>
+              <div className="flex items-center gap-sm bg-surface-container-high px-md py-sm rounded-full border border-white/10 backdrop-blur-sm">
+                <span className="material-symbols-outlined text-primary" data-icon="smartphone">smartphone</span>
+                <span className="font-label-lg text-on-surface">Experience Turffin</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-lg h-auto">
+              <div className="md:col-span-6 bg-surface-container p-xl rounded border border-white/10 flex flex-col justify-between min-h-[400px]">
+                <h3 className="font-headline-md text-headline-md text-white uppercase">Elite sporting grounds</h3>
+                <p className="font-body-md text-on-surface-variant opacity-70">Curated listings, the same positioning as Browse Turfs in the app.</p>
+              </div>
+              <div className="md:col-span-6 bg-surface-container-high rounded border border-white/10 overflow-hidden relative group min-h-[400px]">
+                <img alt="Map area discovery" className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJAfH-ZH1D373XP-AX7WseHrUIFBz2_6dgbnrWRs3y4hVkohlvWKrGQez0qusOCfgl5VKJlzayXfnP3QdJQz7ZCxxEuUNw_sD9zLSmagbg21fsSTYGoMj-JoHnn0J7MnH2YA7oMMyIyMVxwkMsFkmqW7zSl1HT6bmP44KXvFAdWv1TYJpwRvNoUUclGLgU1-6OiOoOXclOXvJwd7AEELKLnmnECNjqAg6K63tNu8tmWjNGhY-tGqQyR18TCsGHTs9Emwd_PPfff7ls" />
+                <div className="absolute inset-0 p-xl flex flex-col justify-end bg-gradient-to-t from-background to-transparent">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase">Area first</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Find pitches in your part of town instead of chasing rumors in chat.</p>
+                </div>
+              </div>
+              <div className="md:col-span-4 bg-surface-container p-xl rounded border border-white/10 flex flex-col gap-xl min-h-[350px]">
+                <div className="bg-background/50 p-md rounded border border-white/5 space-y-md">
+                  <div className="h-1.5 w-full bg-primary/20 rounded-full overflow-hidden">
+                    <div className="h-full w-3/4 bg-primary"></div>
+                  </div>
+                  <span className="font-label-sm text-on-surface-variant uppercase tracking-widest opacity-50 block">Slot Availability</span>
+                </div>
+                <div>
+                  <h3 className="font-headline-md text-headline-md text-white uppercase">Real time slots</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Time blocks and pricing before you commit, with no surprises at the gate.</p>
+                </div>
+              </div>
+              <div className="md:col-span-8 bg-surface-container p-xl rounded border border-white/10 flex flex-col md:flex-row items-center gap-xl min-h-[350px]">
+                <div className="flex-1 space-y-md">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase">Secure checkout</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Pick add ons where venues offer them, pay, and get confirmation you can share instantly with your team.</p>
+                </div>
+                <div className="flex h-48 w-48 shrink-0 items-center justify-center rounded border border-white/5 bg-background/50">
+                  <span className="material-symbols-outlined text-[80px] text-primary" data-icon="verified_user" style={{ "fontVariationSettings": "'FILL' 1" }}>verified_user</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl" id="why-turffin">
+            <div className="max-w-[1440px] mx-auto px-margin text-center">
+              <span className="font-label-lg text-label-lg text-primary uppercase block mb-md">Why Turffin</span>
+              <h2 className="font-headline-lg text-headline-lg text-white uppercase mb-xxl">Premium turfs, effortless booking, elite management</h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-lg text-left">
+                <div className="border-l border-white/10 pl-lg py-md hover:border-primary transition-colors">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase mb-sm">Multi sport</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Football, cricket, basketball, tennis, and more, aligned with browse filters.</p>
+                </div>
+                <div className="border-l border-white/10 pl-lg py-md hover:border-primary transition-colors">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase mb-sm">Trusted Listings</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Rich turf pages with galleries, amenities, and getting there context.</p>
+                </div>
+                <div className="border-l border-white/10 pl-lg py-md hover:border-primary transition-colors">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase mb-sm">Team ready</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Share confirmations and keep squads aligned on time and location.</p>
+                </div>
+                <div className="border-l border-white/10 pl-lg py-md hover:border-primary transition-colors">
+                  <h3 className="font-headline-md text-headline-md text-white uppercase mb-sm">Venue Operations</h3>
+                  <p className="font-body-md text-on-surface-variant opacity-70">Turf admin tools for requests, calendar, and analytics in the dashboard.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl max-w-[1440px] mx-auto px-margin" id="for-venues">
+            <div className="mb-xxl text-center max-w-3xl mx-auto space-y-md">
+              <span className="font-label-lg text-label-lg text-primary uppercase">For turf owners</span>
+              <h2 className="font-headline-lg text-headline-lg text-white uppercase">Venue partner plans on Turffin</h2>
+              <p className="font-body-md text-on-surface-variant italic opacity-80">Monthly partner plans for listing, visibility, calendars, and operations are coming soon. Players pay your hourly rates when they book.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+
+              <div className="bg-surface-container p-xl rounded border border-white/10 flex flex-col h-full">
+                <div className="mb-xl">
+                  <h3 className="font-headline-md text-white uppercase">Starter</h3>
+                  <p className="font-label-sm text-on-surface-variant uppercase tracking-widest opacity-60">Single pitch or small venue</p>
+                </div>
+                <div className="mb-xl">
+                  <span className="font-headline-lg text-white">Coming soon</span>
+                </div>
+                <ul className="space-y-md mb-xl flex-1">
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>One turf listing & profile</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Standard booking calendar</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Email alerts for new requests</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Help center access</span>
+                  </li>
+                </ul>
+                <a className="btn-waitlist w-full border-2 border-white/10 text-white py-md rounded font-label-lg uppercase transition-all block text-center" href={WAITLIST_HREF}>Join waitlist</a>
+              </div>
+
+              <div className="bg-surface-container p-xl rounded border-2 border-primary flex flex-col h-full relative transform lg:scale-[1.02] shadow-2xl">
+                <div className="absolute -top-4 right-8 bg-primary text-on-primary px-md py-xs rounded-full font-label-lg uppercase text-[12px] tracking-widest">Popular</div>
+                <div className="mb-xl">
+                  <h3 className="font-headline-md text-white uppercase">Team</h3>
+                  <p className="font-label-sm text-on-surface-variant uppercase tracking-widest opacity-60">Busy venue with multiple slots</p>
+                </div>
+                <div className="mb-xl">
+                  <span className="font-headline-lg text-white">Coming soon</span>
+                </div>
+                <ul className="space-y-md mb-xl flex-1">
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Up to 3 pitches under one account</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Priority placement in search</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>In app chat for player questions</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Monthly performance snapshot</span>
+                  </li>
+                </ul>
+                <a className="btn-waitlist w-full bg-primary text-on-primary py-md rounded font-label-lg uppercase transition-all btn-primary-gradient block text-center" href={WAITLIST_HREF}>Join waitlist</a>
+              </div>
+
+              <div className="bg-surface-container p-xl rounded border border-white/10 flex flex-col h-full">
+                <div className="mb-xl">
+                  <h3 className="font-headline-md text-white uppercase">Club</h3>
+                  <p className="font-label-sm text-on-surface-variant uppercase tracking-widest opacity-60">Multi site operators & brands</p>
+                </div>
+                <div className="mb-xl">
+                  <span className="font-headline-lg text-white">Coming soon</span>
+                </div>
+                <ul className="space-y-md mb-xl flex-1">
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Unlimited pitch slots</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Partner success line</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Advanced analytics export</span>
+                  </li>
+                  <li className="flex items-start gap-sm text-on-surface/80">
+                    <span className="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">check_circle</span>
+                    <span>Co marketing on launches</span>
+                  </li>
+                </ul>
+                <a className="btn-waitlist w-full border-2 border-white/10 text-white py-md rounded font-label-lg uppercase transition-all block text-center" href={WAITLIST_HREF}>Join waitlist</a>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-xxl bg-surface-container-lowest" id="faq">
+            <div className="max-w-[1440px] mx-auto px-margin">
+              <h2 className="font-display-lg text-display-lg-mobile md:text-[64px] text-white uppercase mb-xxl text-center">FAQs</h2>
+              <div className="mx-auto max-w-4xl space-y-md">
+                <FaqItem
+                  question="What is Turffin?"
+                  answer="Turffin connects athletes, schools, and clubs with premium sports turfs across Bangladesh. You search by area and sport, book a slot with transparent venue pricing, and show up with a digital pass."
+                />
+                <FaqItem
+                  question="Which sports and parts of Bangladesh?"
+                  answer="The product is built around football, cricket, basketball, tennis, and more, with filters on browse. We are planning coverage across every administrative division: Barishal, Chattogram, Dhaka, Khulna, Mymensingh, Rajshahi, Rangpur, and Sylhet, with earlier pilots where venue density and demand line up best."
+                />
+                <FaqItem
+                  question="Do I pay a Turffin venue subscription just to play?"
+                  answer="No. Any monthly partner plans you see us talk about are for turf owners who list on Turffin, not a fee to step on the pitch. As a player you pay the venue’s hourly slot rate when you book."
+                />
+                <FaqItem
+                  question="I run a turf. What do I get?"
+                  answer="A listing players can find in browse, calendars and booking requests in your turf admin dashboard, and tools to reduce no shows. Partner plans cover that software; you still set your own hourly prices."
+                />
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <footer className="bg-surface-container-lowest pt-xxl pb-xl border-t border-white/5" id="contact">
+          <div className="max-w-[1440px] mx-auto px-margin">
+            <div className="mb-xxl grid grid-cols-1 items-start gap-xxl lg:grid-cols-12">
+              <div className="min-w-0 space-y-md lg:col-span-6">
+                <img alt="Turffin — sports turf and field booking in Bangladesh" className="mb-lg h-8 w-auto brightness-0 invert md:h-10" src="/images/logo.png" width={160} height={40} />
+                <p className="w-full text-pretty text-lg leading-relaxed text-on-surface-variant opacity-70">Find and book premium sports turfs across Bangladesh. The same promise as the live product. Full browse, memberships, and dashboards arrive at launch.</p>
+                <div className="flex gap-md pt-md">
+                  <a className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors" href="https://turffin.vercel.app/" target="_blank">
+                    <span className="material-symbols-outlined text-on-surface text-[20px]">public</span>
+                  </a>
+                  <a className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors" href={CONTACT_MAIL_HREF}>
+                    <span className="material-symbols-outlined text-on-surface text-[20px]">mail</span>
+                  </a>
+                </div>
+              </div>
+              <div className="grid w-full min-w-0 grid-cols-2 items-start gap-x-lg gap-y-xl sm:flex sm:flex-row sm:items-start sm:justify-end sm:gap-0 lg:col-span-6">
+                <div className="min-w-0 space-y-md text-left">
+                  <h4 className="font-label-lg uppercase tracking-widest text-primary">Platform</h4>
+                  <ul className="space-y-sm text-on-surface-variant/80">
+                    <li><a className="hover:text-white transition-colors" href="#mission">Mission</a></li>
+                    <li><a className="hover:text-white transition-colors" href="#how-it-works">How it works</a></li>
+                    <li><a className="hover:text-white transition-colors" href="#for-players">For players</a></li>
+                    <li><a className="hover:text-white transition-colors" href="#for-venues">For venues</a></li>
+                    <li><a className="hover:text-white transition-colors" href="#why-turffin">Why Turffin</a></li>
+                    <li><a className="hover:text-white transition-colors" href="#faq">FAQ</a></li>
+                  </ul>
+                </div>
+                <div aria-hidden="true" className="hidden w-px shrink-0 self-stretch bg-white/10 sm:mx-xxl sm:block" />
+                <div className="min-w-0 space-y-md text-left">
+                  <h4 className="font-label-lg uppercase tracking-widest text-primary">Contact</h4>
+                  <a
+                    className="inline-block max-w-full break-words text-on-surface-variant/80 hover:text-white transition-colors"
+                    href={CONTACT_MAIL_HREF}
+                  >
+                    turffin.official@gmail.com
+                  </a>
+                  <div className="space-y-sm pt-md sm:pt-xl">
+                    <a className="block text-sm text-on-surface-variant/50 hover:text-white transition-colors" href="#">Privacy</a>
+                    <a className="block text-sm text-on-surface-variant/50 hover:text-white transition-colors" href="#">Terms</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-md border-t border-white/5 pt-xl text-sm text-on-surface-variant/40 md:flex-row md:items-center md:justify-between">
+              <p>© 2026 Turffin. All rights reserved.</p>
+              <div className="flex items-center gap-sm">
+                <span>Built with</span>
+                <span className="material-symbols-outlined text-primary text-[14px]" style={{ "fontVariationSettings": "'FILL' 1" }}>favorite</span>
+                <span>for the athletes of Bangladesh.</span>
+              </div>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+    </>
+  );
+}
